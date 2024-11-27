@@ -2,6 +2,7 @@
 agp = "8.6.1"
 colorpickerCompose = "1.0.0"
 googleServices = "4.4.2"
+gson = "2.11.0"
 hiltAndroid = "2.51.1"
 hiltAndroidGradlePlugin = "2.51"
 hiltNavigationCompose = "1.2.0"
@@ -27,6 +28,7 @@ androidx-room-paging = { module = "androidx.room:room-paging" }
 androidx-room-runtime = { module = "androidx.room:room-runtime" }
 colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroidGradlePlugin" }

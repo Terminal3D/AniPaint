@@ -25,10 +25,14 @@ sealed interface PaintMenuNavigationEvent {
         val imageSize: ImageSize
     ) : PaintMenuNavigationEvent
 
+    data class NavigateToLastImage(
+        val image: PaintImage
+    ) : PaintMenuNavigationEvent
 }
 
 sealed interface PaintMenuAction {
     data class CreateNewImage(val imageSize: ImageSize) : PaintMenuAction
+    data object OpenLastImage : PaintMenuAction
 }
 
 data class PaintMenuState(
@@ -55,6 +59,7 @@ class PaintMenuViewModel @Inject constructor(
 
     init {
         init()
+        subscribeToLastImage()
     }
 
     private fun init() {
@@ -62,13 +67,8 @@ class PaintMenuViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true) }
             try {
                 withContext(Dispatchers.IO) {
-                    val lastImage = paintMenuRepository.getLastImage()
-
                     _state.update {
-                        it.copy(
-                            imageSizes = paintMenuRepository.getImageSizes(),
-                            lastImage = lastImage
-                        )
+                        it.copy(imageSizes = paintMenuRepository.getImageSizes())
                     }
                 }
             } catch (e: Exception) {
@@ -78,12 +78,28 @@ class PaintMenuViewModel @Inject constructor(
         }
     }
 
+    private fun subscribeToLastImage() = viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+            paintMenuRepository.getLastImage().collect { lastImage ->
+                _state.update {
+                    it.copy(lastImage = lastImage)
+                }
+            }
+        }
+    }
+
     fun onAction(action: PaintMenuAction) {
         viewModelScope.launch {
             when (action) {
                 is PaintMenuAction.CreateNewImage -> _navigationEvents.emit(
                     PaintMenuNavigationEvent.NavigateToNewImage(action.imageSize)
                 )
+
+                PaintMenuAction.OpenLastImage -> state.value.lastImage?.let {
+                    _navigationEvents.emit(
+                        PaintMenuNavigationEvent.NavigateToLastImage(it)
+                    )
+                }
             }
         }
     }

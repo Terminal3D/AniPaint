@@ -52,6 +52,12 @@ fun HomeNavGraph(
                             is PaintMenuNavigationEvent.NavigateToNewImage -> navController.navigate(
                                 PaintRoutes.Paint(navigationEvent.imageSize)
                             )
+
+                            is PaintMenuNavigationEvent.NavigateToLastImage -> navController.navigate(
+                                PaintRoutes.Paint(
+                                    imageSize = null
+                                )
+                            )
                         }
                     }
                 }

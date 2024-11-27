@@ -1,4 +1,4 @@
-package com.example.coursework.common.database.dto
+package com.example.coursework.common.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -6,6 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "last_image")
 data class LastImageEntity(
     @PrimaryKey val id: Int = 0,
-    val image: List<IntArray>,
+    val image: ByteArray,
     val size: Int,
 )

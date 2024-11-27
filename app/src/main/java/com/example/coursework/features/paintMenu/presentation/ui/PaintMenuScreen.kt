@@ -44,7 +44,7 @@ fun PaintMenuScreen(
                     // Опция "Продолжить последний рисунок"
                     state.lastImage?.let { lastImage ->
                         Button(
-                            onClick = { },
+                            onClick = { onAction(PaintMenuAction.OpenLastImage) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp)

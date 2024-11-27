@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coursework.core.models.ImageSize
+import com.example.coursework.core.models.PaintImage
 import com.example.coursework.features.paint.data.PaintRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,18 +73,35 @@ class PaintViewModel @Inject constructor(
 
 
     fun getPaintScreen(
-        imageSize: ImageSize
+        imageSize: ImageSize?
     ) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
                 withContext(Dispatchers.IO) {
-                    _state.update {
-                        it.copy(
-                            imageSize = imageSize
-                        )
+                    if (imageSize != null) {
+                        _state.update {
+                            it.copy(imageSize = imageSize)
+                        }
+
+                        makeClearScreen()
+                    } else {
+                        val lastImage = paintRepository.getLastImage().firstOrNull()
+                        if (lastImage != null) {
+                            _state.update { state ->
+                                state.copy(
+                                    pixels = lastImage.pixels.toTypedArray(),
+                                    imageSize = lastImage.imageSize
+                                )
+                            }
+                        } else {
+                            _state.update {
+                                it.copy(imageSize = ImageSize.XXS)
+                            }
+                            makeClearScreen()
+                        }
+
                     }
-                    makeClearScreen()
                 }
             } catch (e: Exception) {
 //                _uiEvents.emit(PaintUiEvent.)
@@ -114,10 +134,19 @@ class PaintViewModel @Inject constructor(
         }
     }
 
+    private suspend fun saveImageAction() {
+        paintRepository.saveLastImage(
+            state.value.imageSize,
+            state.value.pixels.toList()
+        )
+    }
+
+
     fun onAction(action: PaintAction) {
         when (action) {
             is PaintAction.NavigateBack -> {
                 viewModelScope.launch {
+                    saveImageAction()
                     _navigationEvents.emit(PaintNavigationEvent.NavigateBack)
                 }
             }

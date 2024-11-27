@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
-import com.example.coursework.common.database.dto.LastImageEntity
+import com.example.coursework.common.database.entities.LastImageEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

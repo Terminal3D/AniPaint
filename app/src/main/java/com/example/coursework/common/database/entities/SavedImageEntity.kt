@@ -1,11 +1,11 @@
-package com.example.coursework.common.database.dto
+package com.example.coursework.common.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "saved_images")
 data class SavedImageEntity(
-    val image: List<IntArray>,
+    val image: ByteArray,
     val size: Int,
 
     @PrimaryKey(autoGenerate = true)

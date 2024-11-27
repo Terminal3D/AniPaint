@@ -64,8 +64,9 @@ dependencies {
     kapt(libs.hilt.android.compiler)
 
     // Room
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.compiler)
+//    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.gson)
     implementation(libs.androidx.room.paging)
     implementation(libs.androidx.room.ktx)
 
