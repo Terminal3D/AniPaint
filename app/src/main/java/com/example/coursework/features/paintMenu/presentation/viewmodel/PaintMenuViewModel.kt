@@ -1,6 +1,5 @@
-package com.example.coursework.features.paintMenu.presentation.presentation
+package com.example.coursework.features.paintMenu.presentation.viewmodel
 
-import android.graphics.Paint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coursework.core.models.ImageSize
@@ -91,9 +90,11 @@ class PaintMenuViewModel @Inject constructor(
     fun onAction(action: PaintMenuAction) {
         viewModelScope.launch {
             when (action) {
-                is PaintMenuAction.CreateNewImage -> _navigationEvents.emit(
-                    PaintMenuNavigationEvent.NavigateToNewImage(action.imageSize)
-                )
+                is PaintMenuAction.CreateNewImage -> {
+                    _navigationEvents.emit(
+                        PaintMenuNavigationEvent.NavigateToNewImage(action.imageSize)
+                    )
+                }
 
                 PaintMenuAction.OpenLastImage -> state.value.lastImage?.let {
                     _navigationEvents.emit(

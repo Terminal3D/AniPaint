@@ -5,16 +5,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coursework.core.models.ImageSize
-import com.example.coursework.core.models.PaintImage
 import com.example.coursework.features.paint.data.PaintRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,9 +36,11 @@ sealed interface PaintAction {
     data class ChangeColorPickerVisibility(val isVisible: Boolean) : PaintAction
     data class SelectColor(val color: Color) : PaintAction
     data object SaveImage : PaintAction
+    data class SaveImageWithName(val name: String) : PaintAction
     data object ClearScreen : PaintAction
     data class ChangeGridVisibility(val isVisible: Boolean) : PaintAction
     data class ChangeClearDialogVisibility(val isVisible: Boolean) : PaintAction
+    data class ChangeSaveImageWithNameDialogVisibility(val isVisible: Boolean) : PaintAction
     data class DrawPixel(val x: Int, val y: Int) : PaintAction
 }
 
@@ -53,8 +54,11 @@ data class PaintState(
     val isGridVisible: Boolean = true,
     val imageSize: ImageSize = ImageSize.XS,
     val pixels: Array<IntArray> = emptyArray(),
+    val imageName: String? = null,
+    val imageId: Int? = null,
 
-    val isClearDialogVisible: Boolean = false
+    val isClearDialogVisible: Boolean = false,
+    val isSaveImageWithNameDialogVisible: Boolean = false,
 )
 
 @HiltViewModel
@@ -71,36 +75,56 @@ class PaintViewModel @Inject constructor(
     private val _navigationEvents = MutableSharedFlow<PaintNavigationEvent>()
     val navigationEvents = _navigationEvents.asSharedFlow()
 
+    private var lastDrawTime = System.currentTimeMillis()
+    private val drawDelay = 500L
 
     fun getPaintScreen(
-        imageSize: ImageSize?
+        imageSize: ImageSize?,
+        imageId: Int?
     ) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
                 withContext(Dispatchers.IO) {
-                    if (imageSize != null) {
-                        _state.update {
-                            it.copy(imageSize = imageSize)
-                        }
-
-                        makeClearScreen()
-                    } else {
-                        val lastImage = paintRepository.getLastImage().firstOrNull()
-                        if (lastImage != null) {
-                            _state.update { state ->
-                                state.copy(
-                                    pixels = lastImage.pixels.toTypedArray(),
-                                    imageSize = lastImage.imageSize
+                    when {
+                        imageId != null -> {
+                            val image = paintRepository.getImageById(imageId)
+                            _state.update {
+                                it.copy(
+                                    imageId = image.id,
+                                    imageSize = image.imageSize,
+                                    imageName = image.name,
+                                    pixels = image.pixels.toTypedArray()
                                 )
                             }
-                        } else {
+                        }
+
+                        imageSize != null -> {
                             _state.update {
-                                it.copy(imageSize = ImageSize.XXS)
+                                it.copy(imageSize = imageSize)
                             }
+
                             makeClearScreen()
                         }
 
+                        else -> {
+                            val lastImage = paintRepository.getLastImage().firstOrNull()
+                            if (lastImage != null) {
+                                _state.update { state ->
+                                    state.copy(
+                                        pixels = lastImage.pixels.toTypedArray(),
+                                        imageSize = lastImage.imageSize,
+                                        imageName = lastImage.name,
+                                        imageId = lastImage.id
+                                    )
+                                }
+                            } else {
+                                _state.update {
+                                    it.copy(imageSize = ImageSize.XXS)
+                                }
+                                makeClearScreen()
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -126,19 +150,54 @@ class PaintViewModel @Inject constructor(
         if (x in 0 until state.value.imageSize.size && y in 0 until state.value.imageSize.size) {
             state.value.pixels[x][y] = state.value.currentColor.toArgb()
         }
+        scheduleImageSave()
     }
 
     private fun erasePixel(x: Int, y: Int) {
         if (x in 0 until state.value.imageSize.size && y in 0 until state.value.imageSize.size) {
             state.value.pixels[x][y] = Color.White.toArgb()
         }
+        scheduleImageSave()
     }
 
-    private suspend fun saveImageAction() {
+    private fun scheduleImageSave() {
+        lastDrawTime = System.currentTimeMillis()
+
+        viewModelScope.launch {
+            delay(drawDelay)
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastDrawTime >= drawDelay) {
+                saveLastImage()
+            }
+        }
+    }
+
+    private suspend fun saveLastImage() {
         paintRepository.saveLastImage(
             state.value.imageSize,
-            state.value.pixels.toList()
+            state.value.pixels.toList(),
+            state.value.imageName,
+            state.value.imageId
         )
+    }
+
+    private suspend fun saveImageWithName() {
+        state.value.imageName?.let { name ->
+            val id = paintRepository.saveImage(
+                imageSize = state.value.imageSize,
+                pixels = state.value.pixels.toList(),
+                name = name,
+                id = state.value.imageId
+            )
+            _state.update {
+                it.copy(
+                    imageId = id
+                )
+            }
+            saveLastImage()
+        } ?: _state.update {
+            it.copy(isSaveImageWithNameDialogVisible = true)
+        }
     }
 
 
@@ -146,7 +205,7 @@ class PaintViewModel @Inject constructor(
         when (action) {
             is PaintAction.NavigateBack -> {
                 viewModelScope.launch {
-                    saveImageAction()
+                    saveLastImage()
                     _navigationEvents.emit(PaintNavigationEvent.NavigateBack)
                 }
             }
@@ -194,8 +253,24 @@ class PaintViewModel @Inject constructor(
             }
 
             is PaintAction.SaveImage -> {
-                // Пока без реализации
-                // _uiEvents.emit(PaintUiEvent.ShowMessage("Сохранение пока не реализовано"))
+                viewModelScope.launch {
+                    if (state.value.imageName == null) {
+                        _state.update {
+                            it.copy(isSaveImageWithNameDialogVisible = true)
+                        }
+                    } else {
+                        saveImageWithName()
+                    }
+                }
+            }
+
+            is PaintAction.SaveImageWithName -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(imageName = action.name)
+                    }
+                    saveImageWithName()
+                }
             }
 
             is PaintAction.DrawPixel -> {
@@ -207,6 +282,12 @@ class PaintViewModel @Inject constructor(
             }
 
             PaintAction.ClearScreen -> makeClearScreen()
+
+            is PaintAction.ChangeSaveImageWithNameDialogVisibility -> {
+                _state.update {
+                    it.copy(isSaveImageWithNameDialogVisible = action.isVisible)
+                }
+            }
         }
     }
 

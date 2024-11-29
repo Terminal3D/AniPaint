@@ -10,18 +10,22 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.coursework.features.gallery.presentation.ui.GalleryScreen
+import com.example.coursework.features.gallery.presentation.viewmodel.GalleryNavigationEvent
+import com.example.coursework.features.gallery.presentation.viewmodel.GalleryViewModel
 import com.example.coursework.features.navigation.route.MainRoutes
 import com.example.coursework.features.navigation.route.PaintRoutes
 import com.example.coursework.features.paint.presentation.ui.PaintScreen
 import com.example.coursework.features.paint.presentation.viewmodel.PaintNavigationEvent
 import com.example.coursework.features.paint.presentation.viewmodel.PaintViewModel
-import com.example.coursework.features.paintMenu.presentation.presentation.PaintMenuNavigationEvent
-import com.example.coursework.features.paintMenu.presentation.presentation.PaintMenuViewModel
 import com.example.coursework.features.paintMenu.presentation.ui.PaintMenuScreen
+import com.example.coursework.features.paintMenu.presentation.viewmodel.PaintMenuNavigationEvent
+import com.example.coursework.features.paintMenu.presentation.viewmodel.PaintMenuViewModel
 
 @Composable
 fun HomeNavGraph(
@@ -39,7 +43,7 @@ fun HomeNavGraph(
             )
         }
 
-        composable<MainRoutes.Paint> {
+        composable<MainRoutes.PaintMenu> {
 
             val viewModel = hiltViewModel<PaintMenuViewModel>()
             val lifecycleOwner = LocalLifecycleOwner.current
@@ -70,8 +74,36 @@ fun HomeNavGraph(
             )
         }
         composable<MainRoutes.Gallery> {
-            Text(
-                text = "GALLERY",
+            val viewModel = hiltViewModel<GalleryViewModel>()
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val navigationEvents = viewModel.navigationEvents
+            val uiEvents = viewModel.uiEvents
+            LaunchedEffect(lifecycleOwner.lifecycle) {
+                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    navigationEvents.collect { navigationEvent ->
+                        when (navigationEvent) {
+                            is GalleryNavigationEvent.NavigateToImage -> navController.navigate(
+                                PaintRoutes.Paint(
+                                    imageId = navigationEvent.id
+                                )
+                            )
+                            GalleryNavigationEvent.NavigateToPaintMenu -> navController.navigate(
+                                MainRoutes.PaintMenu
+                            ) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                }
+            }
+
+            GalleryScreen(
+                state = viewModel.state.collectAsState().value,
+                onAction = viewModel::onAction,
                 modifier = modifier
             )
         }
@@ -83,7 +115,7 @@ fun HomeNavGraph(
             val viewModel = hiltViewModel<PaintViewModel>()
 
             remember {
-                viewModel.getPaintScreen(args.imageSize)
+                viewModel.getPaintScreen(args.imageSize, args.imageId)
             }
 
             val lifecycleOwner = LocalLifecycleOwner.current

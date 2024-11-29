@@ -18,7 +18,7 @@ sealed class MainRoutes(
     )
 
     @Serializable
-    data object Paint : MainRoutes(
+    data object PaintMenu : MainRoutes(
         title = R.string.bottom_bar_paint_title,
         icon = R.drawable.baseline_draw_24
     )

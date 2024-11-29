@@ -20,7 +20,7 @@ fun HomeScreen(
                 navController = navController,
                 tabs = listOf(
                     MainRoutes.Home,
-                    MainRoutes.Paint,
+                    MainRoutes.PaintMenu,
                     MainRoutes.Gallery
                 )
             )

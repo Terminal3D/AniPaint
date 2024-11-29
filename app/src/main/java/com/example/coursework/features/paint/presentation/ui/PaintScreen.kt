@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.example.coursework.features.paint.presentation.ui.components.ColorPickerDialog
 import com.example.coursework.features.paint.presentation.ui.components.PaintBottomBar
 import com.example.coursework.features.paint.presentation.ui.components.PaintTopBar
+import com.example.coursework.features.paint.presentation.ui.components.SaveImageDialog
 import com.example.coursework.features.paint.presentation.viewmodel.PaintAction
 import com.example.coursework.features.paint.presentation.viewmodel.PaintState
 import com.example.coursework.features.paint.presentation.viewmodel.PaintUiEvent
@@ -45,10 +46,13 @@ fun PaintScreen(
     Scaffold(
         topBar = {
             PaintTopBar(
+                imageName = state.imageName,
                 onBackPressed = {
                     onAction(PaintAction.NavigateBack)
                 },
-                onSavePressed = {}
+                onSavePressed = {
+                    onAction(PaintAction.SaveImage)
+                }
             )
         },
         bottomBar = {
@@ -99,6 +103,18 @@ fun PaintScreen(
                     ColorPickerDialog(
                         onColorSelected = { onAction(PaintAction.SelectColor(it)) },
                         onDismiss = { onAction(PaintAction.ChangeColorPickerVisibility(false)) }
+                    )
+                }
+
+                if (state.isSaveImageWithNameDialogVisible) {
+                    SaveImageDialog(
+                        onSave = {
+                            onAction(PaintAction.SaveImageWithName(it))
+                        },
+                        onDismiss = {
+                            onAction(PaintAction.ChangeSaveImageWithNameDialogVisibility(false))
+                        },
+                        imageName = state.imageName
                     )
                 }
 

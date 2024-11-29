@@ -8,4 +8,5 @@ interface PaintMenuRepository {
     fun getImageSizes() : List<ImageSize>
 
     fun getLastImage() : Flow<PaintImage?>
+
 }
