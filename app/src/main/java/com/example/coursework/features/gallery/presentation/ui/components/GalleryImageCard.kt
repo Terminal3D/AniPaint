@@ -16,6 +16,10 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,20 +31,33 @@ import com.example.coursework.features.gallery.data.GalleryImage
 @Composable
 fun GalleryImageCard(
     image: GalleryImage,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit, // Лямбда для удаления
+    onShare: () -> Unit // Лямбда для "поделиться">
 ) {
+
+    var checkedState by remember { mutableStateOf(false) }
+
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
             .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
+
+
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+
         ) {
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -71,6 +88,8 @@ fun GalleryImageCard(
                     )
                 )
             }
+
+
         }
     }
 }

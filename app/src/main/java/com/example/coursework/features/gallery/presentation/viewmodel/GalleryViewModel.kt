@@ -23,6 +23,7 @@ sealed interface GalleryNavigationEvent {
 sealed interface GalleryAction {
     data class NavigateToImageAction(val image: GalleryImage) : GalleryAction
     data class DeleteImageAction(val image: GalleryImage) : GalleryAction
+    data class ShareImageAction(val image: GalleryImage) : GalleryAction
     data object NavigateToPaintMenuAction : GalleryAction
 }
 
@@ -54,10 +55,18 @@ class GalleryViewModel @Inject constructor(private val galleryRepository: Galler
 
     private fun getSavedImages() {
         viewModelScope.launch {
+            _state.update {
+                it.copy(isLoading = true)
+            }
+
             galleryRepository.getSavedImages().collect { images ->
                 _state.update {
                     it.copy(savedImages = images)
                 }
+            }
+
+            _state.update {
+                it.copy(isLoading = false)
             }
         }
     }
@@ -73,6 +82,10 @@ class GalleryViewModel @Inject constructor(private val galleryRepository: Galler
                 GalleryAction.NavigateToPaintMenuAction -> _navigationEvents.emit(
                     GalleryNavigationEvent.NavigateToPaintMenu
                 )
+
+                is GalleryAction.ShareImageAction -> {
+
+                }
             }
         }
     }

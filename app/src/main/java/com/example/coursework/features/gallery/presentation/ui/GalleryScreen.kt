@@ -31,7 +31,6 @@ fun GalleryScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text("Изображения") }
@@ -57,7 +56,7 @@ fun GalleryScreen(
                 columns = GridCells.Fixed(2),
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(top = paddingValues.calculateTopPadding()),
                 contentPadding = PaddingValues(16.dp)
             ) {
                 items(state.savedImages) { image ->
@@ -65,6 +64,12 @@ fun GalleryScreen(
                         image = image,
                         onClick = {
                             onAction(GalleryAction.NavigateToImageAction(image))
+                        },
+                        onDelete = {
+                            onAction(GalleryAction.DeleteImageAction(image))
+                        },
+                        onShare = {
+                            onAction(GalleryAction.ShareImageAction(image))
                         }
                     )
                 }

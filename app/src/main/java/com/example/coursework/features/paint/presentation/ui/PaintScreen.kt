@@ -52,6 +52,16 @@ fun PaintScreen(
                 },
                 onSavePressed = {
                     onAction(PaintAction.SaveImage)
+                },
+                showSaveMenu = state.isSaveMenuVisible,
+                onHideSaveMenu = {
+                    onAction(PaintAction.ChangeSaveMenuVisibility(false))
+                },
+                onUpdatePressed = {
+                    onAction(PaintAction.UpdateImage)
+                },
+                onSaveAsPressed = {
+                    onAction(PaintAction.SaveImageAs)
                 }
             )
         },

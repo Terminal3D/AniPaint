@@ -33,15 +33,19 @@ sealed interface PaintAction {
 
     data object ToggleBrush : PaintAction
     data object SelectEraser : PaintAction
-    data class ChangeColorPickerVisibility(val isVisible: Boolean) : PaintAction
     data class SelectColor(val color: Color) : PaintAction
     data object SaveImage : PaintAction
+    data object UpdateImage : PaintAction
+    data object SaveImageAs : PaintAction
     data class SaveImageWithName(val name: String) : PaintAction
     data object ClearScreen : PaintAction
+    data class DrawPixel(val x: Int, val y: Int) : PaintAction
+
+    data class ChangeSaveMenuVisibility(val isVisible: Boolean) : PaintAction
     data class ChangeGridVisibility(val isVisible: Boolean) : PaintAction
+    data class ChangeColorPickerVisibility(val isVisible: Boolean) : PaintAction
     data class ChangeClearDialogVisibility(val isVisible: Boolean) : PaintAction
     data class ChangeSaveImageWithNameDialogVisibility(val isVisible: Boolean) : PaintAction
-    data class DrawPixel(val x: Int, val y: Int) : PaintAction
 }
 
 data class PaintState(
@@ -50,13 +54,14 @@ data class PaintState(
     val isBrushEnabled: Boolean = false,
     val isEraserEnabled: Boolean = false,
     val currentColor: Color = Color.Black,
-    val isColorPickerDialogVisible: Boolean = false,
     val isGridVisible: Boolean = true,
     val imageSize: ImageSize = ImageSize.XS,
     val pixels: Array<IntArray> = emptyArray(),
     val imageName: String? = null,
     val imageId: Int? = null,
 
+    val isSaveMenuVisible: Boolean = false,
+    val isColorPickerDialogVisible: Boolean = false,
     val isClearDialogVisible: Boolean = false,
     val isSaveImageWithNameDialogVisible: Boolean = false,
 )
@@ -181,13 +186,13 @@ class PaintViewModel @Inject constructor(
         )
     }
 
-    private suspend fun saveImageWithName() {
+    private suspend fun saveImageWithName(imageId: Int?) {
         state.value.imageName?.let { name ->
             val id = paintRepository.saveImage(
                 imageSize = state.value.imageSize,
                 pixels = state.value.pixels.toList(),
                 name = name,
-                id = state.value.imageId
+                id = imageId
             )
             _state.update {
                 it.copy(
@@ -259,7 +264,10 @@ class PaintViewModel @Inject constructor(
                             it.copy(isSaveImageWithNameDialogVisible = true)
                         }
                     } else {
-                        saveImageWithName()
+                        _state.update {
+                            it.copy(isSaveMenuVisible = true)
+                        }
+//                        saveImageWithName(state.value.imageId)
                     }
                 }
             }
@@ -269,7 +277,19 @@ class PaintViewModel @Inject constructor(
                     _state.update {
                         it.copy(imageName = action.name)
                     }
-                    saveImageWithName()
+                    saveImageWithName(null)
+                }
+            }
+
+            is PaintAction.SaveImageAs -> {
+                _state.update {
+                    it.copy(isSaveImageWithNameDialogVisible = true)
+                }
+            }
+
+            is PaintAction.UpdateImage -> {
+                viewModelScope.launch {
+                    saveImageWithName(state.value.imageId)
                 }
             }
 
@@ -286,6 +306,12 @@ class PaintViewModel @Inject constructor(
             is PaintAction.ChangeSaveImageWithNameDialogVisibility -> {
                 _state.update {
                     it.copy(isSaveImageWithNameDialogVisible = action.isVisible)
+                }
+            }
+
+            is PaintAction.ChangeSaveMenuVisibility -> {
+                _state.update {
+                    it.copy(isSaveMenuVisible = action.isVisible)
                 }
             }
         }
