@@ -1,6 +1,8 @@
 package com.example.coursework.common.database.di
 
 import com.example.coursework.common.database.PaintDao
+import com.example.coursework.common.database.entities.AnimationEntity
+import com.example.coursework.common.database.entities.AnimationFrameEntity
 import com.example.coursework.common.database.entities.SavedImageEntity
 import com.example.coursework.common.database.mappers.toLastImageEntity
 import com.example.coursework.common.database.mappers.toPaintImage
@@ -43,4 +45,31 @@ class PaintDatabaseRepositoryImpl @Inject constructor(
     override fun deleteImageById(id: Int) {
         paintDao.deleteImageById(id)
     }
+
+    override suspend fun updateAnimation(animation: AnimationEntity, frames: List<AnimationFrameEntity>) {
+//        paintDao.deleteAnimationById(animation.id)
+
+        paintDao.insertAnimation(animation)
+
+        frames.forEach {
+            paintDao.insertAnimationFrame(it)
+        }
+    }
+
+    override fun getAllAnimations(): Flow<List<AnimationEntity>> {
+        return paintDao.getAllAnimations()
+    }
+
+    override fun getAnimationById(id: Int): Flow<AnimationEntity> {
+        return paintDao.getAnimationById(id)
+    }
+
+    override suspend fun deleteAnimation(animation: AnimationEntity) {
+        paintDao.deleteAnimation(animation)
+    }
+
+    override suspend fun deleteAnimationById(id: Int) {
+        paintDao.deleteAnimationById(id)
+    }
+
 }

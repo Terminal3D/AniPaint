@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class GalleryType(name: String) {
+    IMAGES("Изображения"),
+    ANIMATIONS("Анимации")
+}
+
 sealed interface GalleryUiEvent
 
 sealed interface GalleryNavigationEvent {
@@ -22,8 +27,9 @@ sealed interface GalleryNavigationEvent {
 
 sealed interface GalleryAction {
     data class NavigateToImageAction(val image: GalleryImage) : GalleryAction
-    data class DeleteImageAction(val image: GalleryImage) : GalleryAction
-    data class ShareImageAction(val image: GalleryImage) : GalleryAction
+    data class DeleteImageAction(val image: GalleryImage?) : GalleryAction
+    data class ShareImageAction(val image: GalleryImage?) : GalleryAction
+    data class SwitchGalleryType(val type: GalleryType) : GalleryAction
     data object NavigateToPaintMenuAction : GalleryAction
 }
 
@@ -31,7 +37,8 @@ data class GalleryState(
     val isLoading: Boolean = true,
     val error: Boolean = false,
 
-    val savedImages: List<GalleryImage> = emptyList()
+    val savedImages: List<GalleryImage> = emptyList(),
+    val galleryType: GalleryType = GalleryType.IMAGES
 )
 
 
@@ -75,7 +82,9 @@ class GalleryViewModel @Inject constructor(private val galleryRepository: Galler
     fun onAction(action: GalleryAction) {
         viewModelScope.launch {
             when (action) {
-                is GalleryAction.DeleteImageAction -> galleryRepository.deleteSavedImage(action.image)
+                is GalleryAction.DeleteImageAction -> action.image?.let {
+                    galleryRepository.deleteSavedImage(action.image)
+                }
                 is GalleryAction.NavigateToImageAction -> _navigationEvents.emit(
                     GalleryNavigationEvent.NavigateToImage(action.image.id)
                 )
@@ -85,6 +94,9 @@ class GalleryViewModel @Inject constructor(private val galleryRepository: Galler
 
                 is GalleryAction.ShareImageAction -> {
 
+                }
+                is GalleryAction.SwitchGalleryType -> {
+                    _state.update { it.copy(galleryType = action.type) }
                 }
             }
         }

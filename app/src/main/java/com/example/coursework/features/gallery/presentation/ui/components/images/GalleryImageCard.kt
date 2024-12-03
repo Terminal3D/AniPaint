@@ -1,11 +1,16 @@
-package com.example.coursework.features.gallery.presentation.ui.components
+package com.example.coursework.features.gallery.presentation.ui.components.images
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,6 +21,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,39 +29,62 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.coursework.features.gallery.data.GalleryImage
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GalleryImageCard(
     image: GalleryImage,
     onClick: () -> Unit,
-    onDelete: () -> Unit, // Лямбда для удаления
-    onShare: () -> Unit // Лямбда для "поделиться">
+    onLongClick: () -> Unit
 ) {
 
-    var checkedState by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
+    // Управление состоянием нажатия для визуального отклика
+    val interactionSource = remember { MutableInteractionSource() }
+    var isPressed by remember { mutableStateOf(false) }
+
+    // Следим за взаимодействиями для изменения состояния нажатия
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is androidx.compose.foundation.interaction.PressInteraction.Press -> {
+                    isPressed = true
+                }
+                is androidx.compose.foundation.interaction.PressInteraction.Release,
+                is androidx.compose.foundation.interaction.PressInteraction.Cancel -> {
+                    isPressed = false
+                }
+                else -> Unit
+            }
+        }
+    }
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            }
             .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
-
-
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxWidth()
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = LocalIndication.current,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                    role = Role.Button
+                )
                 .padding(16.dp)
-
         ) {
 
             Column(
@@ -69,6 +98,13 @@ fun GalleryImageCard(
                         .size(128.dp)
                         .clip(RoundedCornerShape(12.dp))
                 )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = image.title,
@@ -88,8 +124,6 @@ fun GalleryImageCard(
                     )
                 )
             }
-
-
         }
     }
 }
