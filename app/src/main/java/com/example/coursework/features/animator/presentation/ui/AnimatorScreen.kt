@@ -88,7 +88,7 @@ fun AnimatorScreen(
     Scaffold(
         topBar = {
             EditorTopBar(
-                name = state.animationName,
+                name = state.animationName ?: "Анимашка",
                 onBackPressed = {
                     onAction(AnimatorAction.NavigateBack)
                 },

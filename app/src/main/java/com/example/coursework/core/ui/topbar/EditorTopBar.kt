@@ -21,7 +21,7 @@ import com.example.coursework.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorTopBar(
-    name: String?,
+    name: String,
     showSaveMenu: Boolean,
     onBackPressed: () -> Unit,
     onSavePressed: () -> Unit,
@@ -32,7 +32,7 @@ fun EditorTopBar(
 ) {
     TopAppBar(
         title = {
-            Text(name ?: "Рисовалка")
+            Text(name)
         },
         navigationIcon = {
             IconButton(onClick = onBackPressed) {

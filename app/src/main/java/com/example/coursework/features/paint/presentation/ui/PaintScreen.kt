@@ -5,14 +5,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,8 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import com.example.coursework.R
 import com.example.coursework.core.ui.SaveImageDialog
 import com.example.coursework.core.ui.topbar.EditorTopBar
 import com.example.coursework.features.paint.presentation.ui.components.ColorPickerDialog
@@ -34,6 +45,7 @@ import com.example.coursework.features.paint.presentation.viewmodel.PaintAction
 import com.example.coursework.features.paint.presentation.viewmodel.PaintState
 import com.example.coursework.features.paint.presentation.viewmodel.PaintUiEvent
 import kotlinx.coroutines.flow.Flow
+import kotlin.math.roundToInt
 
 @Composable
 fun PaintScreen(
@@ -46,7 +58,7 @@ fun PaintScreen(
     Scaffold(
         topBar = {
             EditorTopBar(
-                name = state.imageName,
+                name = state.imageName ?: "Рисовалка",
                 onBackPressed = {
                     onAction(PaintAction.NavigateBack)
                 },
@@ -132,6 +144,88 @@ fun PaintScreen(
                 var recomposeTrigger by remember { mutableIntStateOf(0) }
 
 
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .background(
+                            color = Color.Transparent,
+                            shape = MaterialTheme.shapes.small
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = { onAction(PaintAction.ChangeGridVisibility(!state.isGridVisible)) },
+                        modifier = Modifier
+                            .background(
+                                color = if (state.isGridVisible) MaterialTheme.colorScheme.primary.copy(
+                                    alpha = 0.1f
+                                ) else Color.Transparent,
+                                shape = MaterialTheme.shapes.small
+                            ),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (state.isGridVisible) {
+                                ImageVector.vectorResource(R.drawable.baseline_grid_off_24)
+                            } else {
+                                ImageVector.vectorResource(R.drawable.baseline_grid_on_24)
+                            },
+                            contentDescription = "Toggle Grid",
+                            tint = if (state.isGridVisible) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+
+                    // Кнопка Undo
+                    IconButton(
+                        onClick = { onAction(PaintAction.UndoLastAction) },
+                        enabled = state.canUndo,
+                        modifier = Modifier
+                            .background(
+                                color = if (state.canUndo) MaterialTheme.colorScheme.primary.copy(
+                                    alpha = 0.1f
+                                ) else Color.Transparent,
+                                shape = MaterialTheme.shapes.small
+                            ),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.baseline_undo_24),
+                            contentDescription = "Undo",
+                            tint = if (state.canUndo) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+
+                    // Кнопка Redo
+                    IconButton(
+                        onClick = { onAction(PaintAction.RedoLastAction) },
+                        enabled = state.canRedo,
+                        modifier = Modifier
+                            .background(
+                                color = if (state.canRedo) MaterialTheme.colorScheme.primary.copy(
+                                    alpha = 0.1f
+                                ) else Color.Transparent,
+                                shape = MaterialTheme.shapes.small
+                            ),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.baseline_redo_24),
+                            contentDescription = "Redo",
+                            tint = if (state.canRedo) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+                }
+
                 Box {
                     Canvas(
                         modifier = Modifier
@@ -213,6 +307,41 @@ fun PaintScreen(
                                 )
                             }
                         }
+                    }
+                }
+
+                if (state.isCircleToolSelected) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Радиус окружности: ${state.currentCircleRadius.roundToInt()}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Slider(
+                            value = state.currentCircleRadius,
+                            onValueChange = { newRadius ->
+                                onAction(PaintAction.ChangeCircleRadius(newRadius))
+                            },
+                            valueRange = 1f..24f,
+                            steps = 24,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = Color.Gray
+                            )
+                        )
                     }
                 }
             }
