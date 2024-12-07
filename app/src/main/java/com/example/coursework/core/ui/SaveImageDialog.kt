@@ -1,4 +1,4 @@
-package com.example.coursework.features.paint.presentation.ui.components
+package com.example.coursework.core.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +16,8 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun SaveImageDialog(
+    title: String,
+    placeholder: String,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
     imageName: String?
@@ -26,14 +28,14 @@ fun SaveImageDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = "Введите название для изображения")
+            Text(text = title)
         },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 TextField(
                     value = name,
                     onValueChange = setName,
-                    label = { Text(text = "Имя изображения") },
+                    label = { Text(text = placeholder) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -65,6 +67,8 @@ fun SaveImageDialogPreview() {
     SaveImageDialog(
         imageName = null,
         onSave = {},
-        onDismiss = {}
+        onDismiss = {},
+        title = "aaaa",
+        placeholder = "bbbbb"
     )
 }

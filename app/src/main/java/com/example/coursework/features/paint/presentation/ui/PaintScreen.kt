@@ -26,10 +26,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.example.coursework.core.ui.SaveImageDialog
+import com.example.coursework.core.ui.topbar.EditorTopBar
 import com.example.coursework.features.paint.presentation.ui.components.ColorPickerDialog
 import com.example.coursework.features.paint.presentation.ui.components.PaintBottomBar
-import com.example.coursework.features.paint.presentation.ui.components.PaintTopBar
-import com.example.coursework.features.paint.presentation.ui.components.SaveImageDialog
 import com.example.coursework.features.paint.presentation.viewmodel.PaintAction
 import com.example.coursework.features.paint.presentation.viewmodel.PaintState
 import com.example.coursework.features.paint.presentation.viewmodel.PaintUiEvent
@@ -45,8 +45,8 @@ fun PaintScreen(
 
     Scaffold(
         topBar = {
-            PaintTopBar(
-                imageName = state.imageName,
+            EditorTopBar(
+                name = state.imageName,
                 onBackPressed = {
                     onAction(PaintAction.NavigateBack)
                 },
@@ -83,7 +83,6 @@ fun PaintScreen(
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-
                 if (state.isClearDialogVisible) {
                     AlertDialog(
                         onDismissRequest = { onAction(PaintAction.ChangeClearDialogVisibility(false)) },
@@ -124,7 +123,9 @@ fun PaintScreen(
                         onDismiss = {
                             onAction(PaintAction.ChangeSaveImageWithNameDialogVisibility(false))
                         },
-                        imageName = state.imageName
+                        imageName = state.imageName,
+                        title = "Введите название для изображения",
+                        placeholder = "Имя изображения"
                     )
                 }
 

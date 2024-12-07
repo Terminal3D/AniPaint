@@ -15,6 +15,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.coursework.features.animator.presentation.ui.AnimatorScreen
+import com.example.coursework.features.animator.presentation.viewmodel.AnimationNavigationEvent
+import com.example.coursework.features.animator.presentation.viewmodel.AnimatorViewModel
 import com.example.coursework.features.gallery.presentation.ui.GalleryScreen
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryNavigationEvent
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryViewModel
@@ -96,6 +99,12 @@ fun HomeNavGraph(
                                 launchSingleTop = true
                                 restoreState = true
                             }
+
+                            is GalleryNavigationEvent.NavigateToAnimation -> {
+                                navController.navigate(
+                                    PaintRoutes.Animator(animationId = navigationEvent.id)
+                                )
+                            }
                         }
                     }
                 }
@@ -103,6 +112,41 @@ fun HomeNavGraph(
 
             GalleryScreen(
                 state = viewModel.state.collectAsState().value,
+                onAction = viewModel::onAction,
+                modifier = modifier
+            )
+        }
+
+        composable<PaintRoutes.Animator> {
+            val args = it.toRoute<PaintRoutes.Animator>()
+
+            val viewModel = hiltViewModel<AnimatorViewModel>()
+
+            remember {
+                viewModel.getAnimatorScreen(args.animationId)
+            }
+
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val navigationEvents = viewModel.navigationEvents
+            val uiEvents = viewModel.uiEvents
+            LaunchedEffect(lifecycleOwner.lifecycle) {
+                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    navigationEvents.collect { navigationEvent ->
+                        when (navigationEvent) {
+                            AnimationNavigationEvent.NavigateBack -> navController.popBackStack()
+                            is AnimationNavigationEvent.NavigateToImagePaint -> navController.navigate(
+                                PaintRoutes.Paint(
+                                    imageId = navigationEvent.id
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            AnimatorScreen(
+                state = viewModel.state.collectAsState().value,
+                uiEvents = uiEvents,
                 onAction = viewModel::onAction,
                 modifier = modifier
             )

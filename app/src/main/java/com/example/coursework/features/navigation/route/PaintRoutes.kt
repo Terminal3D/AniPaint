@@ -11,4 +11,8 @@ sealed interface PaintRoutes {
         val imageId: Int? = null
     ) : PaintRoutes
 
+    @Serializable
+    data class Animator(
+        val animationId: Int? = null
+    ) : PaintRoutes
 }

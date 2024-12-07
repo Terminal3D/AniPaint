@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import com.example.coursework.common.database.entities.AnimationEntity
 import com.example.coursework.common.database.entities.AnimationFrameEntity
 import com.example.coursework.common.database.entities.LastImageEntity
+import com.example.coursework.common.database.entities.SavedAnimationEntity
 import com.example.coursework.common.database.entities.SavedImageEntity
 
 @Database(
@@ -12,9 +13,10 @@ import com.example.coursework.common.database.entities.SavedImageEntity
         LastImageEntity::class,
         SavedImageEntity::class,
         AnimationEntity::class,
-        AnimationFrameEntity::class
+        AnimationFrameEntity::class,
+        SavedAnimationEntity::class
     ],
-    version = 10
+    version = 13
 )
 abstract class PaintDatabase : RoomDatabase() {
     abstract val paintDao: PaintDao

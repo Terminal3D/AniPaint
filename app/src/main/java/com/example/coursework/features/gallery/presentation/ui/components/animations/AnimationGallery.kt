@@ -1,9 +1,5 @@
-package com.example.coursework.features.gallery.presentation.ui.components.images
+package com.example.coursework.features.gallery.presentation.ui.components.animations
 
-import android.content.Intent
-import android.graphics.Bitmap
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,32 +30,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.coursework.core.models.ImageCardItem
-import com.example.coursework.core.ui.ImageCard
-import com.example.coursework.core.utils.ShareUtils
-import com.example.coursework.features.gallery.data.GalleryImage
+import androidx.core.net.toUri
+import com.example.coursework.core.ui.AnimationCard
+import com.example.coursework.core.ui.AnimationCardItem
+import com.example.coursework.core.utils.gifUtils.shareGif
+import com.example.coursework.features.animator.presentation.ui.components.getGifDirectory
+import com.example.coursework.features.gallery.data.GalleryAnimation
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryAction
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryState
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImageGallery(
+fun AnimationGallery(
     state: GalleryState,
     onAction: (GalleryAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sheetIsVisible by remember { mutableStateOf(false) }
-    var imageSheetSource: GalleryImage? by remember { mutableStateOf(null) }
+    var animationSheetSource: GalleryAnimation? by remember { mutableStateOf(null) }
 
     val context = LocalContext.current
 
-    val shareLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-
-    }
-
-    if (state.savedImages.isEmpty()) {
+    if (state.savedAnimations.isEmpty()) {
         Column(
             modifier = modifier
                 .fillMaxSize(),
@@ -67,12 +60,12 @@ fun ImageGallery(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Вы еще не сохранили ни одного изображения.\n Нарисуем первое?",
+                text = "Вы еще не создали ни одной анимации.\n Сделаем первую?",
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { onAction(GalleryAction.NavigateToPaintMenuAction) }) {
-                Text("Создать изображение")
+            Button(onClick = { onAction(GalleryAction.NavigateToNewAnimation) }) {
+                Text("Создать анимацию")
             }
         }
     } else {
@@ -82,18 +75,19 @@ fun ImageGallery(
                 .fillMaxSize(),
             contentPadding = PaddingValues(16.dp)
         ) {
-            items(state.savedImages) { image ->
-                ImageCard(
-                    image = ImageCardItem(
-                        title = image.title,
-                        size = image.size.toString(),
-                        bitmap = image.bitmap
+            items(state.savedAnimations) { animation ->
+                val gifFile = File(getGifDirectory(context), animation.gifUri)
+
+                AnimationCard(
+                    animation = AnimationCardItem(
+                        title = animation.title,
+                        gifUri = gifFile.toUri()
                     ),
                     onClick = {
-                        onAction(GalleryAction.NavigateToImageAction(image))
+                        onAction(GalleryAction.NavigateToAnimationAction(animation))
                     },
                     onLongClick = {
-                        imageSheetSource = image
+                        animationSheetSource = animation
                         sheetIsVisible = true
                     }
                 )
@@ -118,30 +112,10 @@ fun ImageGallery(
                             )
                         },
                         modifier = Modifier.clickable {
-                            imageSheetSource?.let { image ->
-                                val bitmap: Bitmap =
-                                    image.bitmap // Предполагается, что GalleryImage содержит Bitmap
-
-                                val file = ShareUtils.saveBitmapToCache(
-                                    context = context,
-                                    bitmap = bitmap,
-                                    fileName = "{${image.title}}_${image.id}.png" // Предполагается, что у GalleryImage есть id
-                                )
-                                val uri = ShareUtils.getImageUri(context, file)
-
-                                // Создаем Intent для обмена
-                                val shareIntent = ShareUtils.createShareIntent(uri)
-
-                                // Запускаем Intent через лаунчер
-                                shareLauncher.launch(
-                                    Intent.createChooser(
-                                        shareIntent,
-                                        "Поделиться изображением через"
-                                    )
-                                )
+                            animationSheetSource?.gifUri?.let { uri ->
+                                val gifFile = File(getGifDirectory(context), uri)
+                                shareGif(context, gifFile)
                             }
-
-                            sheetIsVisible = false
                         }
                     )
                     ListItem(
@@ -155,7 +129,7 @@ fun ImageGallery(
                             )
                         },
                         modifier = Modifier.clickable {
-                            onAction(GalleryAction.DeleteImageAction(imageSheetSource))
+                            onAction(GalleryAction.DeleteAnimationAction(animationSheetSource))
                             sheetIsVisible = false
                         }
                     )

@@ -70,6 +70,11 @@ dependencies {
     implementation(libs.androidx.room.paging)
     implementation(libs.androidx.room.ktx)
 
+    // Video converters
+    implementation("pl.droidsonroids.gif:android-gif-drawable:1.2.29")
+
+    implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
+
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.ktx)

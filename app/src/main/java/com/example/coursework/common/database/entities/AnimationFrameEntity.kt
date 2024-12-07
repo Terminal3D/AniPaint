@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
             entity = AnimationEntity::class,
             parentColumns = ["id"],
             childColumns = ["animationId"],
-            onDelete = ForeignKey.CASCADE  // Каскадное удаление фреймов при удалении анимации
+            onDelete = ForeignKey.CASCADE
         )
     ]
 )
@@ -22,5 +22,6 @@ data class AnimationFrameEntity(
     val animationId: Int,  // Ссылка на анимацию
     val frameNumber: Int,  // Порядковый номер фрейма
     val frameDuration: Int,  // Продолжительность показа фрейма
+    val realSize: Int, // Исходный размер кадра
     val image: ByteArray  // Изображение для фрейма
 )

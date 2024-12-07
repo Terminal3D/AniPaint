@@ -21,4 +21,19 @@ class GalleryRepositoryImpl @Inject constructor(
         paintDatabaseRepository.deleteImageById(image.id)
     }
 
+    override suspend fun getSavedAnimations(): Flow<List<GalleryAnimation>> {
+        return paintDatabaseRepository.getSavedAnimations().map { animList ->
+            animList.map { animation ->
+                GalleryAnimation(
+                    id = animation.id,
+                    title = animation.title,
+                    gifUri = animation.uri
+                )
+            }
+        }
+    }
+
+    override suspend fun deleteSavedAnimation(animation: GalleryAnimation) {
+        paintDatabaseRepository.deleteAnimationById(animation.id)
+    }
 }
