@@ -1,7 +1,9 @@
 package com.example.coursework.features.animator.presentation.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -9,10 +11,14 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -20,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +66,14 @@ fun AnimatorScreen(
             state.frames.size.plus(1)
         }
     )
+
+    var bottomSheetSource by remember { mutableIntStateOf(0) }
+
+    var editBottomSheetSource by remember {
+        mutableIntStateOf(0)
+    }
+
+    var editBottomSheetVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -130,7 +145,7 @@ fun AnimatorScreen(
                 },
                 stateSliderValue = if (pagerState.currentPage < state.frames.size) {
                     state.frames[pagerState.currentPage].frameDuration
-                } else 24
+                } else 30
             )
         }
     ) { paddingValues ->
@@ -155,10 +170,15 @@ fun AnimatorScreen(
                         add(SliderItem.NewImage(
                             onClick = {
                                 bottomSheetVisible = true
+                                bottomSheetSource = state.frames.size
                             }
                         ))
                     },
-                    pagerState = pagerState
+                    pagerState = pagerState,
+                    onClick = {
+                        editBottomSheetSource = it
+                        editBottomSheetVisible = true
+                    }
                 )
             }
         }
@@ -188,7 +208,7 @@ fun AnimatorScreen(
                                 ),
                                 onClick = {
                                     bottomSheetVisible = false
-                                    onAction(AnimatorAction.AddImageToAnimation(image))
+                                    onAction(AnimatorAction.AddImageToAnimation(image, bottomSheetSource))
                                 },
                                 onLongClick = {
                                     bottomSheetVisible = false
@@ -197,6 +217,49 @@ fun AnimatorScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+
+        if (editBottomSheetVisible) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    editBottomSheetVisible = false
+                },
+                containerColor = ListItemDefaults.containerColor
+            ) {
+                Column {
+                    ListItem(
+                        headlineContent = {
+                            Text("Добавить")
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add",
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            editBottomSheetVisible = false
+                            bottomSheetSource = editBottomSheetSource
+                            bottomSheetVisible = true
+                        }
+                    )
+                    ListItem(
+                        headlineContent = {
+                            Text("Удалить")
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            editBottomSheetVisible = false
+                            onAction(AnimatorAction.DeleteImageFromAnimation(editBottomSheetSource))
+                        }
+                    )
                 }
             }
         }

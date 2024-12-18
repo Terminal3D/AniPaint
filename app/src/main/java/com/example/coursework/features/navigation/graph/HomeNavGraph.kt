@@ -1,6 +1,6 @@
 package com.example.coursework.features.navigation.graph
 
-import androidx.compose.material3.Text
+import EntryScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -18,6 +18,8 @@ import androidx.navigation.toRoute
 import com.example.coursework.features.animator.presentation.ui.AnimatorScreen
 import com.example.coursework.features.animator.presentation.viewmodel.AnimationNavigationEvent
 import com.example.coursework.features.animator.presentation.viewmodel.AnimatorViewModel
+import com.example.coursework.features.entry.presentation.viewmodel.EntryNavgiationEvents
+import com.example.coursework.features.entry.presentation.viewmodel.EntryViewModel
 import com.example.coursework.features.gallery.presentation.ui.GalleryScreen
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryNavigationEvent
 import com.example.coursework.features.gallery.presentation.viewmodel.GalleryViewModel
@@ -40,9 +42,34 @@ fun HomeNavGraph(
         startDestination = MainRoutes.Home,
     ) {
         composable<MainRoutes.Home> {
-            Text(
-                text = "HELLO",
-                modifier = modifier
+            val viewModel = hiltViewModel<EntryViewModel>()
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val navigationEvents = viewModel.navigationEvents
+            LaunchedEffect(lifecycleOwner.lifecycle) {
+                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    navigationEvents.collect { navigationEvent ->
+                        when (navigationEvent) {
+                            EntryNavgiationEvents.CreateAnimation -> navController.navigate(PaintRoutes.Animator())
+                            EntryNavgiationEvents.CreatePicture -> navController.navigate(MainRoutes.PaintMenu) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            EntryNavgiationEvents.OpenGallery -> navController.navigate(MainRoutes.Gallery) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                }
+            }
+            EntryScreen(
+                onAction = viewModel::onAction
             )
         }
 

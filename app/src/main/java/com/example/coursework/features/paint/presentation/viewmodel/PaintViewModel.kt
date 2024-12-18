@@ -33,14 +33,20 @@ enum class Tool(
 ) {
     Line(
         displayName = "Линия",
-        icon = R.drawable.baseline_show_chart_24,
+        icon = R.drawable.baseline_line_24,
         action = PaintAction.SelectLineTool
+    ),
+    LineFixed(
+        displayName = "Линия (фикс.)",
+        icon = R.drawable.baseline_polyline_24,
+        action = PaintAction.SelectFixedLineTool
     ),
     Circle(
         displayName = "Окружность",
         icon = R.drawable.baseline_circle_24,
         action = PaintAction.SelectCircleTool
-    )
+    ),
+
 }
 
 sealed interface PaintUiEvent {
@@ -60,9 +66,11 @@ sealed interface PaintAction {
     data class ChangeBrushSize(val size: Int) : PaintAction
     data object SelectLineTool : PaintAction
     data object SelectCircleTool : PaintAction
+    data object SelectFixedLineTool : PaintAction
     data class ChangeCircleRadius(val radius: Float) : PaintAction
 
     data object SelectFill : PaintAction
+    data object SelectPipette : PaintAction
     data object SaveImage : PaintAction
     data object UpdateImage : PaintAction
     data object SaveImageAs : PaintAction
@@ -94,7 +102,9 @@ data class PaintState(
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
 
+    val isPipetteSelected: Boolean = false,
     val isLineToolSelected: Boolean = false,
+    val isFixedLineToolSelected: Boolean = false,
     val isCircleToolSelected: Boolean = false,
     val pendingLineStart: Offset? = null,
 
@@ -228,7 +238,13 @@ class PaintViewModel @Inject constructor(
             redoStack.add(currentPixelsCopy)
 
 
-            _state.update { it.copy(pixels = previousPixels, canUndo = undoStack.isNotEmpty(), canRedo = redoStack.isNotEmpty()) }
+            _state.update {
+                it.copy(
+                    pixels = previousPixels,
+                    canUndo = undoStack.isNotEmpty(),
+                    canRedo = redoStack.isNotEmpty()
+                )
+            }
         }
     }
 
@@ -242,7 +258,13 @@ class PaintViewModel @Inject constructor(
             undoStack.add(currentPixelsCopy)
 
 
-            _state.update { it.copy(pixels = nextPixels, canUndo = undoStack.isNotEmpty(), canRedo = redoStack.isNotEmpty()) }
+            _state.update {
+                it.copy(
+                    pixels = nextPixels,
+                    canUndo = undoStack.isNotEmpty(),
+                    canRedo = redoStack.isNotEmpty()
+                )
+            }
         }
     }
 
@@ -330,7 +352,6 @@ class PaintViewModel @Inject constructor(
     }
 
 
-
     private fun fillArea(startX: Int, startY: Int) {
         val size = state.value.imageSize.size
         val targetColor = state.value.pixels[startX][startY]
@@ -368,12 +389,15 @@ class PaintViewModel @Inject constructor(
                 saveStateForUndo()
                 handleAction(action)
             }
+
             is PaintAction.ChangeCircleRadius,
             is PaintAction.SelectCircleTool,
             is PaintAction.SelectLineTool,
+            is PaintAction.SelectFixedLineTool,
             is PaintAction.ToggleBrush,
             is PaintAction.SelectEraser,
             is PaintAction.SelectFill,
+            is PaintAction.SelectPipette,
             is PaintAction.ChangeBrushSize,
             is PaintAction.SelectColor,
             is PaintAction.UpdateImage,
@@ -388,6 +412,7 @@ class PaintViewModel @Inject constructor(
             is PaintAction.ChangeSaveImageWithNameDialogVisibility -> {
                 handleAction(action)
             }
+
         }
     }
 
@@ -408,6 +433,8 @@ class PaintViewModel @Inject constructor(
                         isFillEnabled = false,
                         isLineToolSelected = false,
                         isCircleToolSelected = false,
+                        isPipetteSelected = false,
+                        isFixedLineToolSelected = false,
                         pendingLineStart = null
                     )
                 }
@@ -421,6 +448,8 @@ class PaintViewModel @Inject constructor(
                         isFillEnabled = false,
                         isLineToolSelected = false,
                         isCircleToolSelected = false,
+                        isPipetteSelected = false,
+                        isFixedLineToolSelected = false,
                         pendingLineStart = null
                     )
                 }
@@ -434,6 +463,54 @@ class PaintViewModel @Inject constructor(
                         isEraserEnabled = false,
                         isLineToolSelected = false,
                         isCircleToolSelected = false,
+                        isPipetteSelected = false,
+                        isFixedLineToolSelected = false,
+                        pendingLineStart = null
+                    )
+                }
+            }
+
+            is PaintAction.SelectLineTool -> selectLineTool()
+            is PaintAction.SelectFixedLineTool -> {
+                _state.update {
+                    it.copy(
+                        currentTool = Tool.LineFixed,
+                        isCircleToolSelected = false,
+                        isLineToolSelected = false,
+                        isBrushEnabled = false,
+                        isEraserEnabled = false,
+                        isFillEnabled = false,
+                        isPipetteSelected = false,
+                        isFixedLineToolSelected = !state.value.isFixedLineToolSelected,
+                        pendingLineStart = null
+                    )
+                }
+            }
+            is PaintAction.SelectCircleTool -> {
+                _state.update {
+                    it.copy(
+                        currentTool = Tool.Circle,
+                        isCircleToolSelected = !state.value.isCircleToolSelected,
+                        isLineToolSelected = false,
+                        isBrushEnabled = false,
+                        isEraserEnabled = false,
+                        isFillEnabled = false,
+                        isPipetteSelected = false,
+                        isFixedLineToolSelected = false,
+                        pendingLineStart = null
+                    )
+                }
+            }
+
+            is PaintAction.SelectPipette -> {
+                _state.update {
+                    it.copy(
+                        isLineToolSelected = false,
+                        isBrushEnabled = false,
+                        isEraserEnabled = false,
+                        isFillEnabled = false,
+                        isFixedLineToolSelected = false,
+                        isPipetteSelected = !it.isPipetteSelected,
                         pendingLineStart = null
                     )
                 }
@@ -518,21 +595,6 @@ class PaintViewModel @Inject constructor(
                 _state.update { it.copy(brushSize = action.size) }
             }
 
-            is PaintAction.SelectLineTool -> selectLineTool()
-
-            is PaintAction.SelectCircleTool -> {
-                _state.update {
-                    it.copy(
-                        currentTool = Tool.Circle,
-                        isCircleToolSelected = !state.value.isCircleToolSelected,
-                        isLineToolSelected = false,
-                        isBrushEnabled = false,
-                        isEraserEnabled = false,
-                        isFillEnabled = false,
-                        pendingLineStart = null
-                    )
-                }
-            }
 
             is PaintAction.ChangeCircleRadius -> {
                 _state.update {
@@ -550,12 +612,14 @@ class PaintViewModel @Inject constructor(
         _state.update {
             it.copy(
                 currentTool = Tool.Line,
-                isLineToolSelected = !state.value.isLineToolSelected,
+                isLineToolSelected = true,
                 isBrushEnabled = false,
                 isEraserEnabled = false,
                 isFillEnabled = false,
                 pendingLineStart = null,
-                isCircleToolSelected = false
+                isCircleToolSelected = false,
+                isFixedLineToolSelected = false,
+                isPipetteSelected = false,
             )
         }
     }
@@ -563,7 +627,7 @@ class PaintViewModel @Inject constructor(
 
     private fun handleDrawPixel(x: Int, y: Int) {
         when {
-            _state.value.isLineToolSelected -> {
+            _state.value.isLineToolSelected || _state.value.isFixedLineToolSelected -> {
                 val start = _state.value.pendingLineStart
                 if (start == null) {
                     _state.update {
@@ -571,19 +635,40 @@ class PaintViewModel @Inject constructor(
                     }
                 } else {
                     saveStateForUndo()
-                    drawLineOnPixels(start, Offset(x.toFloat(), y.toFloat()), _state.value.brushSize)
-                    _state.update {
-                        it.copy(pendingLineStart = Offset(x.toFloat(), y.toFloat()))
+                    drawLineOnPixels(
+                        start,
+                        Offset(x.toFloat(), y.toFloat()),
+                        _state.value.brushSize
+                    )
+                    if (_state.value.isLineToolSelected) {
+                        _state.update {
+                            it.copy(pendingLineStart = Offset(x.toFloat(), y.toFloat()))
+                        }
                     }
                 }
             }
+
             _state.value.isCircleToolSelected -> {
                 saveStateForUndo()
-                drawCircle(x, y, _state.value.currentCircleRadius, _state.value.currentColor.toArgb())
+                drawCircle(
+                    x,
+                    y,
+                    _state.value.currentCircleRadius,
+                    _state.value.currentColor.toArgb()
+                )
             }
+
             _state.value.isBrushEnabled -> drawPixel(x, y)
             _state.value.isEraserEnabled -> erasePixel(x, y)
             _state.value.isFillEnabled -> fillArea(x, y)
+            _state.value.isPipetteSelected -> {
+                _state.update {
+                    it.copy(
+                        currentColor = Color(it.pixels[x][y])
+                    )
+                }
+            }
+
             else -> {}
         }
     }
@@ -644,10 +729,23 @@ class PaintViewModel @Inject constructor(
 
         val newPixels = pixels.map { it.copyOf() }.toTypedArray()
 
-        _state.update { it.copy(pixels = newPixels, canUndo = undoStack.isNotEmpty(), canRedo = redoStack.isNotEmpty()) }
+        _state.update {
+            it.copy(
+                pixels = newPixels,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = redoStack.isNotEmpty()
+            )
+        }
     }
 
-    private fun drawCircleAtPixel(x: Int, y: Int, brushSize: Int, color: Int, pixels: Array<IntArray>, size: Int) {
+    private fun drawCircleAtPixel(
+        x: Int,
+        y: Int,
+        brushSize: Int,
+        color: Int,
+        pixels: Array<IntArray>,
+        size: Int
+    ) {
         val radius = brushSize / 2
         for (i in (x - radius)..(x + radius)) {
             for (j in (y - radius)..(y + radius)) {

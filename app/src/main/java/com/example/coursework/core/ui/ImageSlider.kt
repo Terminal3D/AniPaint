@@ -46,6 +46,7 @@ fun ImageSlider(
     imageList: List<SliderItem>,
     pagerState: PagerState,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    onClick: (Int) -> Unit,
     actionIcon: @Composable (() -> Unit)? = null,
 ) {
     Column {
@@ -78,6 +79,9 @@ fun ImageSlider(
                 Card(
                     shape = RoundedCornerShape(10.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    onClick = {
+                        onClick(page)
+                    },
                     modifier = Modifier
                         .graphicsLayer {
                             val pageOffset = (

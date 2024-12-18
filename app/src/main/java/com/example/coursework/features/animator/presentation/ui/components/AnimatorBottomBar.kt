@@ -22,12 +22,12 @@ fun AnimatorBottomBar(
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stateSliderValue.toString())
+            Text("$stateSliderValue frames")
             Slider(
                 value = stateSliderValue.toFloat(),
                 onValueChange = { onSlideFinished(it.roundToInt()) },
-                steps = 47,
-                valueRange = 1f..48f,
+                steps = 119,
+                valueRange = 1f..120f,
                 enabled = isEnabled
             )
         }

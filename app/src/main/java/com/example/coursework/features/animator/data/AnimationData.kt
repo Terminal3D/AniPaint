@@ -8,6 +8,8 @@ import com.example.coursework.common.database.entities.SavedAnimationEntity
 import com.example.coursework.core.utils.ImageUtils.getBitmap
 import com.example.coursework.core.utils.gifUtils.createGif
 
+const val FPS = 60f
+
 data class AnimationData(
     val id: Int? = null,
     val title: String,
@@ -60,7 +62,7 @@ fun AnimationFrameData.toAnimationFrameEntity(animationId: Int, wipeId: Boolean)
 
 fun AnimationData.toSavedAnimationEntity(context: Context) : SavedAnimationEntity? {
     return this.id?.let {
-        val fps = 24f
+        val fps = FPS
 
         val bitmaps = frames.map { it.image.copy(it.image.config ?: Bitmap.Config.ARGB_8888, false) }
 

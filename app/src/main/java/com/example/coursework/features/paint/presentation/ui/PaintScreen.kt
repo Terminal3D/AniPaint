@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -122,6 +124,7 @@ fun PaintScreen(
 
                 if (state.isColorPickerDialogVisible) {
                     ColorPickerDialog(
+                        initialColor = state.currentColor,
                         onColorSelected = { onAction(PaintAction.SelectColor(it)) },
                         onDismiss = { onAction(PaintAction.ChangeColorPickerVisibility(false)) }
                     )
@@ -176,6 +179,22 @@ fun PaintScreen(
                             },
                             contentDescription = "Toggle Grid",
                             tint = if (state.isGridVisible) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            onAction(PaintAction.ChangeClearDialogVisibility(true))
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Очистить изображение",
+
                         )
                     }
 

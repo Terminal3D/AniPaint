@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
-const val INITIAL_FRAMES_NUMBER = 24
+const val INITIAL_FRAMES_NUMBER = 30
 
 sealed interface AnimatorUiEvent {
 
@@ -42,7 +42,8 @@ sealed interface AnimatorAction {
     ) : AnimatorAction
 
     data class SaveAnimationWithName(val name: String, val context: Context) : AnimatorAction
-    data class AddImageToAnimation(val image: AnimationImageData) : AnimatorAction
+    data class AddImageToAnimation(val image: AnimationImageData, val pos: Int) : AnimatorAction
+    data class DeleteImageFromAnimation(val pos: Int) : AnimatorAction
     data class NavigateToImagePaint(val image: AnimationImageData) : AnimatorAction
 
     data class ChangeSaveMenuVisibility(val isVisible: Boolean) : AnimatorAction
@@ -182,14 +183,25 @@ class AnimatorViewModel @Inject constructor(
 
             is AnimatorAction.AddImageToAnimation -> _state.update {
                 it.copy(
-                    frames = it.frames + AnimationFrameData(
-                        id = 0,
-                        image = action.image.bitmap,
-                        frameNumber = it.frames.size,
-                        frameDuration = INITIAL_FRAMES_NUMBER,
-                        imageArray = action.image.imageByteArray,
-                        realSize = action.image.size
-                    )
+                    frames = it.frames.toMutableList().apply {
+                        this.add(
+                            action.pos,
+                            AnimationFrameData(
+                                id = 0,
+                                image = action.image.bitmap,
+                                frameNumber = it.frames.size,
+                                frameDuration = INITIAL_FRAMES_NUMBER,
+                                imageArray = action.image.imageByteArray,
+                                realSize = action.image.size
+                            )
+                        )
+                    }
+                )
+            }
+
+            is AnimatorAction.DeleteImageFromAnimation -> _state.update {
+                it.copy(
+                    frames = it.frames.minusElement(it.frames[action.pos])
                 )
             }
 

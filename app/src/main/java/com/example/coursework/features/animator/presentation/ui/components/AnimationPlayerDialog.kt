@@ -39,8 +39,10 @@ import com.example.coursework.R
 import com.example.coursework.core.utils.gifUtils.createGif
 import com.example.coursework.core.utils.gifUtils.shareGif
 import com.example.coursework.features.animator.data.AnimationFrameData
+import com.example.coursework.features.animator.data.FPS
 import kotlinx.coroutines.delay
 import java.io.File
+
 
 @Composable
 fun AnimationPlayerDialog(
@@ -53,7 +55,7 @@ fun AnimationPlayerDialog(
     var isPlaying by remember { mutableStateOf(true) }
     var elapsedTime by remember { mutableLongStateOf(0L) }
 
-    val fps = 24f
+    val fps = FPS
 
 
     val frameDurationsMillis = remember(frames) {

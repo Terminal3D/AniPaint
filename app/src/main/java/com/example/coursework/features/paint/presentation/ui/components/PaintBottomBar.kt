@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -94,6 +92,16 @@ fun PaintBottomBar(
             }
 
             IconButton(
+                onClick = { onAction(PaintAction.SelectPipette) },
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.baseline_pippete_24),
+                    contentDescription = "Пипетка цвета",
+                    tint = if (state.isFillEnabled) MaterialTheme.colorScheme.primary else Color.LightGray
+                )
+            }
+
+            IconButton(
                 onClick = { onAction(PaintAction.SelectFill) },
             ) {
                 Icon(
@@ -125,7 +133,7 @@ fun PaintBottomBar(
                     Icon(
                         imageVector = ImageVector.vectorResource(state.currentTool.icon),
                         contentDescription = "Draw Line",
-                        tint = if (state.isLineToolSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                        tint = if (state.isLineToolSelected || state.isFixedLineToolSelected || state.isCircleToolSelected) MaterialTheme.colorScheme.primary else Color.Gray,
                     )
                 }
 
@@ -151,17 +159,6 @@ fun PaintBottomBar(
                         )
                     }
                 }
-            }
-
-            IconButton(
-                onClick = {
-                    onAction(PaintAction.ChangeClearDialogVisibility(true))
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Очистить изображение",
-                )
             }
         },
         floatingActionButton = {
